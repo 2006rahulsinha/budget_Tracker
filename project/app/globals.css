@@ -17,7 +17,7 @@
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --border: 214 32% 91%;          /* #E2E8F0 */
+    --border: 0 32% 91%;          /* #E2E8F0 */
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
 
@@ -41,7 +41,7 @@
     --muted: 222 47% 18%;
     --muted-foreground: 215 20% 65%;
 
-    --border: 222 47% 20%;
+    --border: 222 47% 14%;
     --input: 222 47% 20%;
     --ring: 217 91% 60%;
 

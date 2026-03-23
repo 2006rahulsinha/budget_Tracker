@@ -18,6 +18,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Bar,
+  BarChart,
 } from 'recharts';
 import { mockTransactions, mockChartData, totalSpending } from '@/lib/mock-data';
 import { TrendingUp } from 'lucide-react';
@@ -34,7 +36,7 @@ export default function DashboardPage() {
 
     const { data, error } = await supabase
       .from('expenses')
-      .select('*')
+      .select('*, categories(name)')
       .order('date', { ascending: false })
 
     if (error) {
@@ -48,20 +50,42 @@ export default function DashboardPage() {
 
   fetchExpenses()
 }, [])
-    const totalSpending = expenses.reduce(
+  function formatDate(dateStr: string) {
+    const [year, month, day] = dateStr.split('-')
+    return `${day}/${month}/${year}`
+  }
+    const now = new Date()
+    const sortedExpenses = [...expenses].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+    const currentMonthExpenses = expenses.filter((e) => {
+      const d = new Date(e.date)
+      return (
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear()
+      )
+    })
+    const totalSpending = currentMonthExpenses.reduce(
       (sum, e) => sum + Number(e.amount),
       0
     )
 
     const average =
-      expenses.length > 0 ? totalSpending / expenses.length : 0
-    const chartData = expenses.map((e) => ({
-        date: new Date(e.date).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-        }),
-        amount: Number(e.amount),
-}))
+      currentMonthExpenses.length > 0 ? totalSpending / currentMonthExpenses.length : 0
+      const grouped: Record<string, number> = {}
+
+      sortedExpenses.forEach((e) => {
+        const date = formatDate(e.date)
+
+        if (!grouped[date]) grouped[date] = 0
+        grouped[date] += Number(e.amount)
+      })
+
+      const chartData = Object.entries(grouped).map(([date, amount]) => ({
+        date,
+        amount,
+      }))
+      console.log(chartData)
       if (loading) {
         return <div className="p-6">Loading...</div>
       }
@@ -102,7 +126,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold">
-              {expenses.length}
+              {currentMonthExpenses.length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               This month
@@ -135,7 +159,7 @@ export default function DashboardPage() {
         <CardContent>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <BarChart data={chartData}>
                 <CartesianGrid
                   stroke="hsl(var(--border))"
                   strokeDasharray="3 3"
@@ -160,14 +184,12 @@ export default function DashboardPage() {
                   }}
                   formatter={(value) => [`$${value}`, 'Amount']}
                 />
-                <Line
-                  type="monotone"
+                <Bar
                   dataKey="amount"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={false}
+                  fill="hsl(var(--primary))"
+                  radius={[0, 0, 0, 0]}
                 />
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
@@ -192,7 +214,7 @@ export default function DashboardPage() {
               {expenses.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell className="font-medium">
-                    {new Date(transaction.date).toLocaleDateString('en-US', {
+                    {new Date(transaction.date).toLocaleDateString('en-IN', {
                       month: 'short',
                       day: 'numeric',
                     })}
@@ -202,7 +224,7 @@ export default function DashboardPage() {
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
-                      {transaction.category_id || "General"}
+                      {transaction.categories?.name || "General"}
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-semibold">
