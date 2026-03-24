@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Receipt, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Receipt, IndianRupee } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -17,7 +17,7 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col border-r bg-background">
       <div className="flex h-16 items-center gap-2 border-b px-6">
         <div className="h-8 w-8 rounded-lg bg-neutral-900 flex items-center justify-center">
-          <DollarSign className="h-5 w-5 text-white" />
+          <IndianRupee className="h-5 w-5 text-white" />
         </div>
         <span className="text-lg font-semibold">Budget Tracker</span>
       </div>

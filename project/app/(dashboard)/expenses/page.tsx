@@ -188,7 +188,7 @@ export default function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-neutral-900">Expenses</h1>
+          <h1 className="text-3xl font-semibold ">Expenses</h1>
           <p className="text-neutral-500 mt-1">Manage your expenses</p>
         </div>
         <Button onClick={() => setCategoryOpen(true)}>
@@ -213,6 +213,7 @@ export default function ExpensesPage() {
                 <TableHead>Description</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -232,7 +233,7 @@ export default function ExpensesPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${Number(transaction.amount).toFixed(2)}
+                    ₹{Number(transaction.amount).toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
