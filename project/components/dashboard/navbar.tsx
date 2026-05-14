@@ -19,13 +19,6 @@ export function Navbar() {
     }
   }, [])
 
-  const toggleTheme = () => {
-    const newTheme = !isDark
-    setIsDark(newTheme)
-
-    document.documentElement.classList.toggle('dark', newTheme)
-    localStorage.setItem('theme', newTheme ? 'dark' : 'light')
-  }
   const [user, setUser] = useState<any>(null)
   const router = useRouter();
   useEffect(() => {
@@ -58,9 +51,6 @@ const handleLogout = async () => {
     <div className="flex h-16 items-center justify-between border-b bg-background px-6">
       <div className="flex-1" />
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={toggleTheme}>
-          {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarFallback>{initials}</AvatarFallback>

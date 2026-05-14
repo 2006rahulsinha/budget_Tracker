@@ -23,17 +23,56 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend
+  Legend,
+  Area,
+  AreaChart,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
 } from 'recharts';
 import { mockTransactions, mockChartData, totalSpending } from '@/lib/mock-data';
 import { TrendingUp } from 'lucide-react';
+import { usePrediction } from '@/hooks/usePrediction'
+import { Car, UtensilsCrossed, Tv, CircleEllipsis, ShoppingBag, FileText } from 'lucide-react'
 export default function DashboardPage() {
   const [expenses, setExpenses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [predictions, setPredictions] = useState<Record<string, number> | null>(null)
+  const { prediction, loading: predictionLoading, error } = usePrediction()
   const categoryTotals: Record<string, number> = {}
-  const [chartType, setChartType] = useState<'bar' | 'pie' | 'line'>('bar')
   const now = new Date()
+  
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  Transport:     <Car className="h-3.5 w-3.5" />,
+  Food:          <UtensilsCrossed className="h-3.5 w-3.5" />,
+  Entertainment: <Tv className="h-3.5 w-3.5" />,
+  Misc:          <CircleEllipsis className="h-3.5 w-3.5" />,
+  Shopping:      <ShoppingBag className="h-3.5 w-3.5" />,
+  Bills:         <FileText className="h-3.5 w-3.5" />,
+}
+const CATEGORY_COLORS: Record<string, string> = {
+  Transport:     'bg-indigo-100 text-indigo-700 border-indigo-200',
+  Food:          'bg-green-100 text-green-700 border-green-200',
+  Entertainment: 'bg-amber-100 text-amber-700 border-amber-200',
+  Misc:          'bg-red-100 text-red-700 border-red-200',
+  Shopping:      'bg-blue-100 text-blue-700 border-blue-200',
+  Bills:         'bg-purple-100 text-purple-700 border-purple-200',
+}
+  const [chartType, setChartType] = useState<'bar' | 'pie' | 'line' | 'area' | 'radar'>('bar')
+  const [selectedMonth, setSelectedMonth] = useState<string>('all')
+  
+  // Add this derived data — list of unique months for the selector
+  const availableMonths = Array.from(
+    new Set(expenses.map(e => {
+      const d = new Date(e.date)
+      return d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+    }))
+  ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+
+  // Filter chartData based on selected month
+
+
   const thisMonthsExpenses = expenses.filter((e) => {
     const d = new Date(e.date)
     return (
@@ -45,12 +84,20 @@ export default function DashboardPage() {
   const name = e.categories?.name || "Other"
   categoryTotals[name] = (categoryTotals[name] || 0) + Number(e.amount)
   })
-  const piChartData = Object.entries(categoryTotals).map(
-  ([name, value]) => ({
-    name,
-    amount: value,
-  })
-)
+  const filteredPieData = (selectedMonth === 'all' ? expenses : expenses.filter(e => {
+      const d = new Date(e.date)
+      return d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) === selectedMonth
+    })).reduce<Record<string, number>>((acc, e) => {
+      const name = e.categories?.name || 'Other'
+      acc[name] = (acc[name] || 0) + Number(e.amount)
+      return acc
+    }, {})
+
+    const piChartData = Object.entries(filteredPieData).map(([name, value]) => ({
+      name,
+      amount: value,
+    }))
+
   const categoryMap: Record<string, string> = {
   "113225e0-523b-4f3c-af5e-3b1bfc17b202": "Shopping",
   "3e320471-accc-4b94-b4e6-1a2d853d51a1": "Entertainment",
@@ -87,34 +134,7 @@ const monthlyChartData = Object.entries(monthlyTotals).map(
     date : new Date(month),
   })
 ).sort((a, b) => a.date.getTime() - b.date.getTime())
-useEffect(() => {
-  async function loadPredictions() {
-    try {
-      const res = await fetch('/api/predict')
 
-      if (!res.ok) {
-        console.error('API error:', res.status)
-        return
-      }
-
-      const text = await res.text()
-
-      if (!text) {
-        console.error('Empty response from API')
-        return
-      }
-
-      const data = JSON.parse(text)
-
-      setPredictions(data)
-    } catch (err) {
-      console.error('Fetch failed:', err)
-    }
-  }
-
-  loadPredictions()
-}, [])
-  console.log(predictions);
   useEffect(() => {
   async function fetchExpenses() {
     const {
@@ -173,6 +193,19 @@ useEffect(() => {
         date,
         amount,
       }))
+    const filteredChartData = selectedMonth === 'all'
+      ? chartData
+      : chartData.filter(d => {
+      // d.date is "15/10/2024" — convert back to match "Oct 2024"
+      const [day, month, year] = d.date.split('/')
+      const parsed = new Date(`${year}-${month}-${day}`)
+      const label = parsed.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+      return label === selectedMonth
+    })
+    const radarData = Object.entries(filteredPieData).map(([name, value]) => ({
+      category: name,
+      amount: value,
+    }))
       if (loading) {
         return <div className="p-6">Loading...</div>
       }
@@ -239,94 +272,68 @@ useEffect(() => {
 
       {/* Chart */}
       <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Spending Overview</CardTitle>
-          <div className='flex gap-2'>
-            <button
-              onClick={() => setChartType('bar')}
-              className={`px-2 py-1 rounded-md text-sm ${
-                chartType === 'bar' ? 'bg-primary text-white' : 'bg-muted'
-              }`}
-            >
-              Trend View
-            </button>
-            <button
-              onClick={() => setChartType('pie')}
-              className={`px-2 py-1 rounded-md text-sm ${
-                chartType === 'pie' ? 'bg-primary text-white' : 'bg-muted'
-              }`}
-            >
-                Category-wise View
-              </button>
-            <button
-              onClick={() => setChartType('line')}
-              className={`px-2 py-1 rounded-md text-sm ${
-                chartType === 'line' ? 'bg-primary text-white' : 'bg-muted'
-                }`}
-                >
-                Monthly Trend
-              </button>
+        <CardHeader className="border-b pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base font-semibold">Spending Overview</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedMonth === 'all' ? 'All time' : selectedMonth}
+              </p>
+            </div>
+
+            {/* Month selector */}
+            <div className="flex items-center gap-3">
+              <select
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(e.target.value)}
+                className="text-xs border rounded-md px-2 py-1.5 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="all">All Months</option>
+                {availableMonths.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+
+              {/* Segmented control */}
+              <div className="flex items-center bg-muted rounded-lg p-1 gap-0.5">
+                {[
+                  { key: 'bar',  label: 'Bar'  },
+                  { key: 'line', label: 'Line' },
+                  { key: 'pie',  label: 'Pie'  },
+                  { key: 'radar', label: 'Radar'  },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setChartType(key as any)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
+                      chartType === key
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="pt-6">
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-                {chartType === 'bar' && 
-                  <BarChart data={chartData}>
-                    <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
-
-                    <XAxis
-                      dataKey="date"
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                      tickLine={false}
-                    />
-
-                    <YAxis
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                      tickLine={false}
-                      tickFormatter={(value) => `₹${value}`}
-                    />
-
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                      }}
-                      formatter={(value) => [`₹${value}`, 'Amount']}
-                    />
-
-                    <Bar
-                      dataKey="amount"
-                      fill="hsl(var(--primary))"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-}
-                {chartType === 'pie' && (
-                  <PieChart>
-                    <Pie
-                      data={piChartData}
-                      dataKey="amount"
-                      nameKey="name"
-                      outerRadius={130}
-                      labelLine={false}
-                    >
-                      {piChartData.map((_, index) => (
-                        <Cell
-                          key={index}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-
-                    <Tooltip formatter={(value) => [`₹${value}`, 'Amount']} />
-                    <Legend />
-                  </PieChart>
-                )}
-                {chartType === 'line' && (
+              {chartType === 'bar' ? (
+                <BarChart data={filteredChartData} barSize={14}>
+                  <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `₹${v}`} width={55} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                    formatter={v => [`₹${v}`, 'Amount']}
+                  />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              ): chartType === 'line' ? (
                   <LineChart data={monthlyChartData}>
                     <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
                     <XAxis
@@ -357,8 +364,51 @@ useEffect(() => {
                       dot={{ r: 4 }}
                     />
                   </LineChart>
-                )}
-              </ResponsiveContainer>
+              ) : chartType === 'radar' ? (
+                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={110}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis
+                    dataKey="category"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <PolarRadiusAxis
+                    angle={30}
+                    tickFormatter={v => `₹${v}`}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Radar
+                    dataKey="amount"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.15}
+                    strokeWidth={2}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                    formatter={v => [`₹${v}`, 'Spent']}
+                  />
+                </RadarChart>
+              ) : (
+                <PieChart>
+                  <Pie data={piChartData} dataKey="amount" nameKey="name" outerRadius={120} innerRadius={50} paddingAngle={3} labelLine={false}>
+                    {piChartData.map((_, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                    formatter={v => [`₹${v}`, 'Amount']}
+                  />
+                  <Legend iconType="circle" iconSize={8} formatter={v => <span style={{ fontSize: '12px' }}>{v}</span>} />
+                </PieChart>
+              )
+              }
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
@@ -375,18 +425,53 @@ useEffect(() => {
             ))}
           </CardContent>
         </Card> */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Predicted Spending Next Month</CardTitle>
-        </CardHeader>
-       {predictions &&
-          Object.entries(predictions).map(([cat, value]) => (
-            <div key={cat} className=" flex justify-between items-center p-4 rounded-md ">
-              <span>{categoryMap[cat] || "Others"}</span>
-              <span>₹{value}</span>
+<Card className="shadow-sm">
+  <CardHeader className="border-b pb-4">
+    <CardTitle className="text-base font-semibold">Predicted Spending Next Month</CardTitle>
+    <p className="text-xs text-muted-foreground mt-1">Based on your historical spending patterns</p>
+  </CardHeader>
+
+  <CardContent className="pt-4 px-0">
+    {predictionLoading && (
+      <div className="flex items-center gap-2 p-4 text-muted-foreground text-sm">
+        <div className="h-3 w-3 rounded-full bg-muted-foreground/30 animate-pulse" />
+        Calculating predictions...
+      </div>
+    )}
+
+    {error && (
+      <div className="mx-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+        Could not load predictions
+      </div>
+    )}
+
+    {prediction &&
+      Object.entries(prediction).map(([cat, pred]: [string, any], index) => {
+        const colors = CATEGORY_COLORS[categoryMap[cat]] ?? 'bg-gray-100 text-gray-700'
+        return (
+          <div
+            key={cat}
+            className={`flex justify-between items-center px-6 py-3 hover:bg-muted/40 transition-colors ${
+              index !== Object.entries(prediction).length - 1 ? 'border-b' : ''
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className={`flex items-center gap-3 px-3 text-xl font-large px-2 py-0.5 rounded ${colors}`}>
+                {CATEGORY_ICONS[categoryMap[cat]]}
+                {categoryMap[cat] || 'Others'}
+              </span>
             </div>
-          ))}  
-        </Card>       
+            <div className="text-right">
+              <p className="text-sm font-semibold">₹{pred.predicted.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">
+                ₹{pred.lower.toFixed(0)} – ₹{pred.upper.toFixed(0)}
+              </p>
+            </div>
+          </div>
+        )
+      })}
+  </CardContent>
+</Card>
       {/* Table */}
       {/* <Card className="shadow-sm">
         <CardHeader>

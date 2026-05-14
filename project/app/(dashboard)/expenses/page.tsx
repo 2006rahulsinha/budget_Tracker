@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label';
 import { mockTransactions } from '@/lib/mock-data';
 import { Plus , Trash,Pencil} from 'lucide-react';
 import { supabase } from '@/lib/supabase'
-
+import { Car, UtensilsCrossed, Tv, CircleEllipsis, ShoppingBag, FileText } from 'lucide-react'
 
 export default function ExpensesPage() {  
   const [expenses, setExpenses] = useState<any[]>([])
@@ -37,6 +37,31 @@ export default function ExpensesPage() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState<any | null>(null)
+
+  const CATEGORY_COLORS: Record<string, string> = {
+  Transport:     'bg-indigo-100 text-indigo-700 border-indigo-200',
+  Food:          'bg-green-100 text-green-700 border-green-200',
+  Entertainment: 'bg-amber-100 text-amber-700 border-amber-200',
+  Misc:          'bg-red-100 text-red-700 border-red-200',
+  Shopping:      'bg-blue-100 text-blue-700 border-blue-200',
+  Bills:         'bg-purple-100 text-purple-700 border-purple-200',
+}
+  const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  Transport:     <Car className="h-3.5 w-3.5" />,
+  Food:          <UtensilsCrossed className="h-3.5 w-3.5" />,
+  Entertainment: <Tv className="h-3.5 w-3.5" />,
+  Misc:          <CircleEllipsis className="h-3.5 w-3.5" />,
+  Shopping:      <ShoppingBag className="h-3.5 w-3.5" />,
+  Bills:         <FileText className="h-3.5 w-3.5" />,
+}
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 50
+
+  const totalPages = Math.ceil(expenses.length / ITEMS_PER_PAGE)
+  const paginatedExpenses = expenses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
   useEffect(() => {
   fetchExpenses()
   fetchCategories()
@@ -56,6 +81,7 @@ export default function ExpensesPage() {
 
     if (error) {
       console.error(error)
+      return
       return
     }
 
@@ -201,66 +227,153 @@ export default function ExpensesPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Expenses</CardTitle>
+      <Card className="shadow-sm">
+        <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base font-semibold">All Expenses</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">{expenses.length} transactions total</p>
+          </div>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableHead className="pl-6 text-xs font-semibold uppercase tracking-wide">Date</TableHead>
+                <TableHead className="text-xs font-semibold uppercase tracking-wide">Description</TableHead>
+                <TableHead className="text-xs font-semibold uppercase tracking-wide">Category</TableHead>
+                <TableHead className="text-right text-xs font-semibold uppercase tracking-wide">Amount</TableHead>
+                <TableHead className="text-right pr-6 text-xs font-semibold uppercase tracking-wide">Actions</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              {expenses.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell className="font-medium">
+              {paginatedExpenses.map((transaction) => (
+                <TableRow key={transaction.id} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="pl-6 text-sm text-muted-foreground">
                     {new Date(transaction.date).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
                     })}
                   </TableCell>
-                  <TableCell>{transaction.description}</TableCell>
+
+                  <TableCell className="font-medium text-sm">
+                    {transaction.description}
+                  </TableCell>
+
                   <TableCell>
-                    <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-700">
-                      {transaction.categories?.name || "General"}
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                      CATEGORY_COLORS[transaction.categories?.name] || 'bg-gray-100 text-gray-700 border-gray-200'
+                    }`}>
+                      {CATEGORY_ICONS[transaction.categories?.name]}
+                      {transaction.categories?.name || 'General'}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+
+                  <TableCell className="text-right font-semibold text-sm">
                     ₹{Number(transaction.amount).toFixed(2)}
                   </TableCell>
-                  <TableCell className="text-right">
+
+                  <TableCell className="text-right pr-6">
                     <Button
                       variant="ghost"
                       size="icon"
-                     onClick={() => {
-                      setEditingExpense(transaction)
-                      setDescription(transaction.description)
-                      setAmount(transaction.amount.toString())
-                      setCategoryID(transaction.category_id || '')
-                      setEditOpen(true)
+                      className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      onClick={() => {
+                        setEditingExpense(transaction)
+                        setDescription(transaction.description)
+                        setAmount(transaction.amount.toString())
+                        setCategoryID(transaction.category_id || '')
+                        setEditOpen(true)
                       }}
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
-                      size= "icon"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-red-50 hover:text-red-600 transition-colors"
                       onClick={() => handleDeleteExpense(transaction.id)}
                     >
-                      <Trash className="h-4 w-4" />
+                      <Trash className="h-3.5 w-3.5" />
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, expenses.length)} of {expenses.length}
+            </p>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                «
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                ‹
+              </Button>
+
+              {/* Page numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                .reduce<(number | '...')[]>((acc, p, i, arr) => {
+                  if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('...')
+                  acc.push(p)
+                  return acc
+                }, [])
+                .map((p, i) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground text-sm">…</span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={currentPage === p ? 'default' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8 text-sm"
+                      onClick={() => setCurrentPage(p as number)}
+                    >
+                      {p}
+                    </Button>
+                  )
+                )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                ›
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                »
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
       <Dialog open={open} onOpenChange={setOpen}>

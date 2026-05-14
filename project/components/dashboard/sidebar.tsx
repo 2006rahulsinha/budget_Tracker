@@ -8,6 +8,7 @@ import { LayoutDashboard, Receipt, IndianRupee } from 'lucide-react';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Expenses', href: '/expenses', icon: Receipt },
+  {name: 'Budgets', href: '/budgets', icon: IndianRupee },
 ];
 
 export function Sidebar() {

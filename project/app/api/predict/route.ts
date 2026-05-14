@@ -37,6 +37,7 @@ export async function GET() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(expenses),
+      next: {revalidate: 86400}, // disable caching
     })
 
     const text = await res.text() // safer than json()

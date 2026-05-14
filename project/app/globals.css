@@ -5,34 +5,51 @@
 @layer base {
   :root {
     /* Core Colors (Light Mode) */
-    --background: 210 40% 98%;      /* #F8FAFC */
-    --foreground: 222 47% 11%;      /* #1E293B */
+    --background: 0 0% 0%;      /* #F8FAFC */
+    --foreground: 256 100% 100%;     /* #1E293B */
 
-    --card: 0 0% 100%;              /* White */
-    --card-foreground: 222 47% 11%;
+    --card: rgb(11, 11, 105);              /* White */
+    --card-foreground: 0 0% 0% 100%;
 
-    --primary: 221 83% 53%;         /* #2563EB */
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 222 47% 18%;
+    --muted-foreground: 215 20% 65%;
 
-    --border: 0 32% 91%;          /* #E2E8F0 */
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
 
+    --border: 222 47% 14%;
+    --input: 222 47% 20%;
+    --ring: 217 91% 60%;
+    
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
     /* Core Colors (Dark Mode) */
-    --background: 0 0% 0%; 
+    --background: #161819
     --foreground: 256 100% 100%;
 
-    --card: 0 0% 0% 100%;
+    --card: rgb(11, 11, 105);
     --card-foreground: 0 0% 0% 100%;
 
     --primary: 217 91% 60%;
@@ -47,6 +64,14 @@
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   * {
