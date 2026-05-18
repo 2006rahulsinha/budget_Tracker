@@ -446,30 +446,39 @@ const monthlyChartData = Object.entries(monthlyTotals).map(
     )}
 
     {prediction &&
-      Object.entries(prediction).map(([cat, pred]: [string, any], index) => {
-        const colors = CATEGORY_COLORS[categoryMap[cat]] ?? 'bg-gray-100 text-gray-700'
-        return (
-          <div
-            key={cat}
-            className={`flex justify-between items-center px-6 py-3 hover:bg-muted/40 transition-colors ${
-              index !== Object.entries(prediction).length - 1 ? 'border-b' : ''
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className={`flex items-center gap-3 px-3 text-xl font-large px-2 py-0.5 rounded ${colors}`}>
-                {CATEGORY_ICONS[categoryMap[cat]]}
-                {categoryMap[cat] || 'Others'}
-              </span>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold">₹{pred.predicted.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">
-                ₹{pred.lower.toFixed(0)} – ₹{pred.upper.toFixed(0)}
-              </p>
-            </div>
-          </div>
-        )
-      })}
+  Object.entries(prediction).map(([cat, pred]: [string, any], index) => {
+    if (!pred) return null
+
+    // handle both shapes — plain number or object
+    const predicted = typeof pred === 'number' ? pred : pred.predicted
+    const lower     = typeof pred === 'number' ? pred : pred.lower
+    const upper     = typeof pred === 'number' ? pred : pred.upper
+
+    if (predicted === undefined) return null
+
+    const colors = CATEGORY_COLORS[categoryMap[cat]] ?? 'bg-gray-100 text-gray-700'
+    return (
+      <div
+        key={cat}
+        className={`flex justify-between items-center px-6 py-3 hover:bg-muted/40 transition-colors ${
+          index !== Object.entries(prediction).length - 1 ? 'border-b' : ''
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <span className={`flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full border ${colors}`}>
+            {CATEGORY_ICONS[categoryMap[cat]]}
+            {categoryMap[cat] || 'Others'}
+          </span>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-semibold">₹{Number(predicted).toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground">
+            ₹{Number(lower).toFixed(0)} – ₹{Number(upper).toFixed(0)}
+          </p>
+        </div>
+      </div>
+    )
+  })}
   </CardContent>
 </Card>
       {/* Table */}
