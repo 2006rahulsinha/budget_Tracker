@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+pandas
+prophet
+requests
+google-generativeai
+python-dotenv
+groq
