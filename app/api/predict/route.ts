@@ -17,9 +17,7 @@ export async function GET() {
       }
     )
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -32,25 +30,27 @@ export async function GET() {
     if (error) {
       return Response.json({ error: 'DB error' }, { status: 500 })
     }
-    // 🔥 CALL PYTHON API
-    const res = await fetch('https://budget-tracker-eight-lemon.vercel.app/api/test', {
+
+    const res = await fetch(`${process.env.ML_API_URL}/predict`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(expenses),
-      next: {revalidate: 86400}, // disable caching
+      next: { revalidate: 86400 },
     })
 
-    const text = await res.text() // safer than json()
+    const text = await res.text()
+    console.log('Railway status:', res.status)
+    console.log('Railway response:', text)
 
     if (!text) {
       return Response.json({ error: 'Empty ML response' }, { status: 500 })
     }
 
     const data = JSON.parse(text)
-
     return Response.json(data)
-  } catch (err) {
 
+  } catch (err) {
+    console.log('Predict error:', err)
     return Response.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
