@@ -33,7 +33,7 @@ export async function GET() {
       return Response.json({ error: 'DB error' }, { status: 500 })
     }
     // 🔥 CALL PYTHON API
-    const res = await fetch('http://localhost:8000/predict', {
+    const res = await fetch('https://budget-tracker-eight-lemon.vercel.app/api/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(expenses),
