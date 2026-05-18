@@ -8,8 +8,17 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 from groq import Groq
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()  
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://budget-tracker-eight-lemon.vercel.app/login"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 CATEGORY_MAP = {
     "113225e0-523b-4f3c-af5e-3b1bfc17b202": "Shopping",
